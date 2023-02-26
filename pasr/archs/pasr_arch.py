@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from thop import profile
 from torch import nn as nn
 import torch
