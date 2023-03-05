@@ -1,0 +1,152 @@
+# general settings
+name: realsr_x4
+model_type: PASRModel
+scale: 4
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 10
+
+# network structures
+network_g:
+  type: PASR
+  scale: 4
+  input_channels: 3
+  output_channels: 3
+  num_layers: 5
+  fea_dim: 32
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: RealSR
+    type: PairedImageDataset
+    # (for lmdb)
+    dataroot_gt: datasets/RealSR_V3/All/Train/4_LR_sub.lmdb
+    dataroot_lq: datasets/RealSR_V3/All/Train/4_HR_sub.lmdb
+    filename_tmpl: '{}'
+    io_backend:
+      type: lmdb
+    gt_size: 192
+    use_hflip: true
+    use_rot: true
+    # data loader
+    use_shuffle: true
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 32
+    dataset_enlarge_ratio: 100
+    prefetch_mode: ~
+
+  val_0:
+    name: Set5
+    type: PairedImageDataset
+    dataroot_gt: datasets/Classical/Set5/GTmod12
+    dataroot_lq: datasets/Classical/Set5/LRbicx4
+    io_backend:
+      type: disk
+
+  val_1:
+    name: Set14
+    type: PairedImageDataset
+    dataroot_gt: datasets/Classical/Set14/GTmod12
+    dataroot_lq: datasets/Classical/Set14/LRbicx4
+    io_backend:
+      type: disk
+
+  val_3:
+    name: RealSR
+    type: PairedImageDataset
+    dataroot_gt: datasets/RealSR_V3/All/Test/4
+    dataroot_lq: datasets/RealSR_V3/All/Test/4
+    io_backend:
+      type: disk
+
+# validation settings
+val:
+  val_freq: !!float 5e3
+  save_img: true
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 2
+      test_y_channel: true
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+      better: higher  # the higher, the better. Default: higher
+
+# for gaussion degrade
+degrade:
+  flag: true
+  scale: 4
+  mode: bicubic
+  kernel_size: 21 # gaussian kernel size
+  blur_type: iso_gaussian # iso_gaussian or aniso_gaussian
+  sig: 2.6       # test with a certain value for iso_gaussian
+  sig_min: 0.2   # training 0.2 for x2, 0.2 for x3, 0.2 for x4 for iso_gaussian
+  sig_max: 4.0   # training 2.0 for x2, 3.0 for x2, 4.0 for x4 for iso_gaussian
+  lambda_1: 0.2  # test with a cetrain value for aniso_gaussian
+  lambda_2: 4.0  # test with a cetrain value for aniso_gaussian
+  theta: 0       # angle for aniso_gaussian, set with angle when testing
+  lambda_min: 0.2 # training 0.2 for x2,x3,x4 for aniso_gaussian
+  lambda_max: 4.0 # training 4.0 for x2,x3,x4 for aniso_gaussian
+  noise: 0.0 # random for training and testing for valiation
+  gen_num: 1
+
+# path
+path:
+  pretrain_network_g: ~
+  strict_load_g: false
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [ 250000, 400000, 450000, 475000 ]
+    gamma: 0.5
+
+  total_iter: 1000000
+  warmup_iter: -1  # no warm up
+  contrastive_step: 0
+
+  pixel_opt:
+    type: SmoothL1Loss #L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  contrastive_opt:
+    type: ContrastiveLoss_v2
+    pretrained_path: pretrained/esrgan_discriminator.pth # parm for esrgan discriminator, pretrained model path
+    num_in_ch: 3 # parm for esrgan discriminator
+    num_feat : 64 # parm for esrgan discriminator
+    pre_type : vgg19 # vgg19 esrgan_discriminator
+    loss_type : cosine_distance # l1 cosine_distance
+    tempature : 1 # tempature for cross entropy function
+  contrastive_config:
+    warmup_step: 100000
+    loss_weight: 0.01
+  bicubic_loss_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e3
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

@@ -1,9 +1,10 @@
-datasets/*
-experiments/*
+datasets
+experiments
 results/*
 tb_logger/*
 wandb/*
 tmp/*
+.vscode
 
 *.DS_Store
 
