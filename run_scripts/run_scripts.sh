@@ -1,1 +1,1 @@
-python3 pasr/train.py -opt options/train/RealSR/realsr_x4.yaml
+CUDA_VISIBLE_DEVICES=4 python3 pasr/train.py -opt options/train/RealSR/realsr_x4.yaml --debug

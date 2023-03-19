@@ -20,8 +20,8 @@ datasets:
     name: RealSR
     type: PairedImageDataset
     # (for lmdb)
-    dataroot_gt: datasets/RealSR_V3/All/Train/4_LR_sub.lmdb
-    dataroot_lq: datasets/RealSR_V3/All/Train/4_HR_sub.lmdb
+    dataroot_gt: datasets/RealSR_V3/Train/4/HR_sub.lmdb
+    dataroot_lq: datasets/RealSR_V3/Train/4/LR_sub.lmdb
     filename_tmpl: '{}'
     io_backend:
       type: lmdb
@@ -32,7 +32,7 @@ datasets:
     use_shuffle: true
     num_worker_per_gpu: 6
     batch_size_per_gpu: 32
-    dataset_enlarge_ratio: 100
+    dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
   val_0:
@@ -54,8 +54,8 @@ datasets:
   val_3:
     name: RealSR
     type: PairedImageDataset
-    dataroot_gt: datasets/RealSR_V3/All/Test/4
-    dataroot_lq: datasets/RealSR_V3/All/Test/4
+    dataroot_gt: datasets/RealSR_V3/Test/4/HR
+    dataroot_lq: datasets/RealSR_V3/Test/4/LR
     io_backend:
       type: disk
 
@@ -118,7 +118,7 @@ train:
   contrastive_step: 0
 
   pixel_opt:
-    type: SmoothL1Loss #L1Loss
+    type: L1Loss #L1Loss
     loss_weight: 1.0
     reduction: mean
   contrastive_opt:
